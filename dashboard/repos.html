@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Guardian — Choose a Repo</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #06060a;
+    --bg2:    #0e0e16;
+    --bg3:    #161622;
+    --border: rgba(255,255,255,0.06);
+    --border2:rgba(255,255,255,0.12);
+    --text:   #eeeef5;
+    --muted:  #6b6b8a;
+    --green:  #00e5a0;
+    --red:    #ff4757;
+    --purple: #8b7fff;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Fraunces', Georgia, serif;
+    min-height: 100vh;
+  }
+  .grid-bg {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(139,127,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(139,127,255,0.03) 1px, transparent 1px);
+    background-size: 56px 56px;
+    pointer-events: none; z-index: 0;
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 0 28px; position: relative; z-index: 1; }
+
+  /* Nav */
+  nav { padding: 28px 0; display: flex; align-items: center; justify-content: space-between; }
+  .logo {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
+    letter-spacing: -0.03em; display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text);
+  }
+  .logo-shield {
+    width: 30px; height: 30px; background: linear-gradient(135deg, var(--purple), var(--green));
+    border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .user-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 20px; padding: 6px 14px 6px 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted);
+  }
+  .user-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--purple), var(--green));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: var(--bg);
+    font-family: 'Syne', sans-serif;
+  }
+
+  /* Header */
+  .page-header { padding: 48px 0 40px; }
+  .page-header h1 {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: clamp(28px, 5vw, 42px); letter-spacing: -0.03em;
+    margin-bottom: 10px; line-height: 1.1;
+  }
+  .page-header p { font-size: 16px; color: var(--muted); font-style: italic; }
+
+  /* Search */
+  .search-wrap { margin-bottom: 20px; position: relative; }
+  .search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    pointer-events: none;
+  }
+  input[type="text"] {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 13px 16px 13px 40px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus { border-color: var(--purple); }
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  /* Repo list */
+  .repo-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 60px; }
+
+  .repo-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: border-color 0.15s, transform 0.15s;
+    cursor: pointer;
+  }
+  .repo-card:hover { border-color: var(--border2); transform: translateX(4px); }
+  .repo-card.protected { border-color: rgba(0,229,160,0.3); background: rgba(0,229,160,0.04); }
+
+  .repo-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+
+  .repo-info { flex: 1; min-width: 0; }
+  .repo-name {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+    margin-bottom: 4px; letter-spacing: -0.01em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .repo-meta {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted);
+  }
+  .lang-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); }
+  .private-badge {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border2);
+    border-radius: 4px; padding: 1px 6px;
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em;
+  }
+
+  /* Protect button */
+  .protect-btn {
+    flex-shrink: 0;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
+    padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer;
+    transition: all 0.15s; letter-spacing: -0.01em;
+  }
+  .protect-btn.idle {
+    background: rgba(139,127,255,0.12);
+    border: 1px solid rgba(139,127,255,0.3);
+    color: var(--purple);
+  }
+  .protect-btn.idle:hover { background: rgba(139,127,255,0.22); }
+  .protect-btn.loading {
+    background: transparent; border: 1px solid var(--border2); color: var(--muted);
+    cursor: not-allowed;
+  }
+  .protect-btn.done {
+    background: rgba(0,229,160,0.12);
+    border: 1px solid rgba(0,229,160,0.3);
+    color: var(--green);
+    cursor: default;
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center; padding: 60px 20px;
+    font-style: italic; color: var(--muted);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 12px 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    display: flex; align-items: center; gap: 10px;
+    transition: transform 0.3s; z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(0,229,160,0.3); }
+  .toast.error   { border-color: rgba(255,71,87,0.3); }
+
+  .loading-screen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 300px; gap: 16px;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--muted);
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--purple);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<!-- REPOS_DATA -->
+<div class="grid-bg"></div>
+
+<div class="container">
+  <nav>
+    <a href="/" class="logo">
+      <div class="logo-shield">🛡</div>
+      GUARDIAN
+    </a>
+<div style="display:flex;align-items:center;gap:10px;">
+  <div class="user-pill" id="userPill">
+    <div class="user-avatar" id="userAvatar">?</div>
+    <span id="userName">loading...</span>
+  </div>
+  <a id="logoutBtn" href="#"
+    style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:6px 12px;border-radius:8px;">
+    logout
+  </a>
+</div>
+  </nav>
+
+  <div class="page-header">
+    <h1>Choose a repository<br/>to protect.</h1>
+    <p>Guardian will watch every pull request automatically.</p>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-icon">⌕</div>
+    <input type="text" id="searchInput" placeholder="Search repositories..."/>
+  </div>
+
+  <div class="repo-list" id="repoList">
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      Loading your repositories...
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SESSION = window.SESSION || '';
+const REPOS   = window.REPOS   || [];
+document.getElementById('logoutBtn').href = `/auth/logout?session=${SESSION}`;
+
+// Lang color map
+const LANG_COLORS = {
+  Python:     '#3572A5', JavaScript: '#f1e05a', TypeScript: '#2b7489',
+  Go:         '#00ADD8', Rust:       '#dea584', Java:       '#b07219',
+  Ruby:       '#701516', PHP:        '#4F5D95', 'C++':      '#f34b7d',
+  C:          '#555555', Swift:      '#ffac45', Kotlin:     '#F18E33',
+};
+
+function langColor(lang) {
+  return LANG_COLORS[lang] || '#8b7fff';
+}
+
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr);
+  const d = Math.floor(diff / 86400000);
+  if (d === 0) return 'today';
+  if (d === 1) return 'yesterday';
+  if (d < 30)  return `${d}d ago`;
+  return `${Math.floor(d/30)}mo ago`;
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+async function protectRepo(repoName, btn) {
+        if (btn.classList.contains('done')) {
+        btn.className = 'protect-btn loading';
+        btn.textContent = 'Removing...';
+        try {
+            const res = await fetch('/repos/unprotect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session: SESSION, repo: repoName })
+            });
+            const data = await res.json();
+            if (data.status === 'unprotected') {
+                btn.className = 'protect-btn idle';
+                btn.textContent = 'Protect';
+                btn.closest('.repo-card').classList.remove('protected');
+                showToast(`${repoName} unprotected`, 'success');
+            }
+        } catch(err) {
+            btn.className = 'protect-btn done';
+            btn.textContent = '✓ Protected';
+        }
+        return;
+    }
+  btn.className = 'protect-btn loading';
+  btn.textContent = 'Connecting...';
+
+  try {
+    const res = await fetch('/repos/protect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session: SESSION, repo: repoName })
+    });
+    const data = await res.json();
+
+    if (data.status === 'protected') {
+      btn.className = 'protect-btn done';
+      btn.textContent = '✓ Protected';
+      btn.closest('.repo-card').classList.add('protected');
+      showToast(`${repoName} is now protected`, 'success');
+    } else {
+      throw new Error(data.detail || 'Unknown error');
+    }
+  } catch (err) {
+    btn.className = 'protect-btn idle';
+    btn.textContent = 'Protect';
+    showToast('Failed: ' + err.message, 'error');
+  }
+}
+
+function renderRepos(repos) {
+  const list = document.getElementById('repoList');
+
+  if (!repos.length) {
+    list.innerHTML = '<div class="empty">No repositories found.</div>';
+    return;
+  }
+
+  list.innerHTML = repos.map(r => `
+    <div class="repo-card" data-repo="${r.name}">
+      <div class="repo-icon">${r.private ? '🔒' : '📂'}</div>
+      <div class="repo-info">
+        <div class="repo-name">${r.name}</div>
+        <div class="repo-meta">
+          ${r.language ? `<div class="lang-dot" style="background:${langColor(r.language)}"></div><span>${r.language}</span>` : ''}
+          ${r.private ? '<span class="private-badge">private</span>' : ''}
+          <span>${timeAgo(r.updated)}</span>
+        </div>
+      </div>
+      <button class="protect-btn idle" onclick="protectRepo('${r.name}', this)">
+  Protect
+</button>
+    </div>
+  `).join('');
+}
+
+// Search filter
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  const filtered = REPOS.filter(r => r.name.toLowerCase().includes(q));
+  renderRepos(filtered);
+});
+
+// Set username in nav
+function initUser() {
+  if (!SESSION) return;
+  // Extract username from first repo name or leave as is
+  const firstRepo = REPOS[0];
+  if (firstRepo) {
+    const username = firstRepo.name.split('/')[0];
+    document.getElementById('userAvatar').textContent = username[0].toUpperCase();
+    document.getElementById('userName').textContent = username;
+  }
+}
+
+// Init
+initUser();
+renderRepos(REPOS);
+// Load already protected repos
+async function loadProtectedRepos() {
+    try {
+        const r = await fetch('/protected-repos');
+        const data = await r.json();
+        data.repos.forEach(repoName => {
+            const card = document.querySelector(`[data-repo="${repoName}"]`);
+            if (card) {
+                card.classList.add('protected');
+                const btn = card.querySelector('.protect-btn');
+                if (btn) {
+                    btn.className = 'protect-btn done';
+                    btn.textContent = '✓ Protected';
+                }
+            }
+        });
+    } catch(e) {}
+}
+
+// Call after render
+setTimeout(loadProtectedRepos, 100);
+</script>
+</body>
+</html>
