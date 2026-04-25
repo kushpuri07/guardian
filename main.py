@@ -39,7 +39,8 @@ async def github_login():
         f"https://github.com/login/oauth/authorize"
         f"?client_id={GITHUB_CLIENT_ID}"
         f"&scope={scope}"
-        f"&redirect_uri=http://localhost:8000/auth/callback"
+        f"&redirect_uri=https://guardian-00ng.onrender.com/auth/callback"
+
     )
     return RedirectResponse(url)
 
