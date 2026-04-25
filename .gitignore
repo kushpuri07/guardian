@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.env
+memory.json
+protected_repos.json
+users.db
+*.db
+.DS_Store
