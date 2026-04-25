@@ -42,6 +42,16 @@ async def run_guardian(repo: str, pr_number: int, branch: str, token: str = None
     print(f"   PR:     #{pr_number}")
     print(f"   Branch: {branch}")
     print(f"{'='*60}\n")
+    try:
+        with open("protected_repos.json") as f:
+            data = json.load(f)
+        for r in data["repos"]:
+            if isinstance(r, dict) and r.get("name") == repo:
+                token = r.get("token")
+                print(f"   Token loaded for {repo}")
+                break
+    except Exception:
+        pass
 
     findings = []
 

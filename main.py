@@ -155,8 +155,10 @@ async def protect_repo(request: Request):
                 data = json.load(f)
         except Exception:
             data = {"repos": []}
-        if repo_name not in data["repos"]:
-            data["repos"].append(repo_name)
+        data["repos"].append({
+    "name": repo_name,
+    "token": token
+})
         with open("protected_repos.json", "w") as f:
             json.dump(data, f)
 
