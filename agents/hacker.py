@@ -37,7 +37,15 @@ def clean_json(raw):
     escape_next = False
     for char in raw:
         if escape_next:
-            result.append(char)
+            # Only keep valid JSON escape characters
+            if char in ('"', '\\', '/', 'n', 'r', 't', 'b', 'f', 'u'):
+                result.append(char)
+            elif char == "'":
+                # Invalid escape \' — replace with just '
+                result.append("'")
+            else:
+                # Drop invalid escape
+                result.append(char)
             escape_next = False
         elif char == '\\':
             result.append(char)
