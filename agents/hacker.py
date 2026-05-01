@@ -75,8 +75,18 @@ def clean_json(raw):
             if char in ('"', '\\', '/', 'n', 'r', 't', 'b', 'f', 'u'):
                 result.append(char)
             elif char == "'":
+                # \' is invalid JSON — just keep the quote
                 result.append("'")
+            elif char == '`':
+                # \` is invalid JSON — just keep the backtick
+                result.append('`')
+            elif char == '(':
+                # \( is invalid — keep it
+                result.append('(')
+            elif char == ')':
+                result.append(')')
             else:
+                # Drop the backslash, keep the char
                 result.append(char)
             escape_next = False
         elif char == '\\':
