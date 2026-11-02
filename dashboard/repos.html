@@ -251,18 +251,19 @@
   }
   input[type="text"] {
     width: 100%;
-    background: var(--bg-card);
-    border: 1px solid var(--gold);
-    border-radius: 6px;
-    padding: 14px 18px 14px 48px;
+    background: #1a1410;
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    padding: 16px 20px 16px 52px;
     color: var(--ink);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
+    font-size: 15px;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    box-shadow: 0 0 0 1px rgba(212,168,67,0.1), 0 4px 24px rgba(0,0,0,0.4);
   }
-  input[type="text"]:focus { border-color: var(--gold-pale); box-shadow: 0 0 0 3px rgba(212,168,67,0.25); background: var(--bg-elev); }
-  input[type="text"]::placeholder { color: var(--ink-muted); }
+  input[type="text"]:focus { border-color: var(--gold-pale); box-shadow: 0 0 0 3px rgba(212,168,67,0.3), 0 4px 24px rgba(0,0,0,0.4); background: #221a14; }
+  input[type="text"]::placeholder { color: var(--ink-muted); opacity: 0.8; }
   
   .repo-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 60px; }
   
