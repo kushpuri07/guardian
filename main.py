@@ -3,8 +3,9 @@ import hashlib
 import json
 import asyncio
 import os
-from fastapi import FastAPI, Request, BackgroundTasks, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from pathlib import Path
+from fastapi import FastAPI, Request, BackgroundTasks, HTTPException, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 import httpx
 from dotenv import load_dotenv
@@ -13,7 +14,90 @@ from orchestrator import run_guardian
 load_dotenv()
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="dashboard"), name="static")
+
+# Custom video endpoint with range request support (must be before static mount)
+@app.get("/static/video/{filename}")
+async def serve_video(filename: str, request: Request):
+    video_path = Path("dashboard/video") / filename
+    if not video_path.exists() or not video_path.is_file():
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    file_size = video_path.stat().st_size
+    range_header = request.headers.get("range")
+    
+    # Determine content type
+    if filename.endswith(".mp4"):
+        content_type = "video/mp4"
+    elif filename.endswith(".webm"):
+        content_type = "video/webm"
+    elif filename.endswith(".jpg") or filename.endswith(".jpeg"):
+        content_type = "image/jpeg"
+    elif filename.endswith(".png"):
+        content_type = "image/png"
+    else:
+        content_type = "application/octet-stream"
+    
+    # For images, don't do range requests - serve full file
+    if content_type.startswith("image/"):
+        def iter_full():
+            with open(video_path, "rb") as f:
+                while chunk := f.read(8192):
+                    yield chunk
+        
+        headers = {
+            "Content-Length": str(file_size),
+            "Content-Type": content_type,
+        }
+        return StreamingResponse(iter_full(), headers=headers)
+    
+    if range_header:
+        # Parse range header (e.g., "bytes=0-1023")
+        try:
+            range_match = range_header.replace("bytes=", "").split("-")
+            start = int(range_match[0]) if range_match[0] else 0
+            end = int(range_match[1]) if range_match[1] else file_size - 1
+            start = max(0, start)
+            end = min(file_size - 1, end)
+            content_length = end - start + 1
+            
+            def iter_file():
+                with open(video_path, "rb") as f:
+                    f.seek(start)
+                    remaining = content_length
+                    chunk_size = 8192
+                    while remaining > 0:
+                        read_size = min(chunk_size, remaining)
+                        data = f.read(read_size)
+                        if not data:
+                            break
+                        remaining -= len(data)
+                        yield data
+            
+            headers = {
+                "Content-Range": f"bytes {start}-{end}/{file_size}",
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(content_length),
+                "Content-Type": content_type,
+            }
+            return StreamingResponse(iter_file(), status_code=206, headers=headers)
+        except (ValueError, IndexError):
+            pass  # Fall through to full file
+    
+    # Full file response
+    def iter_full():
+        with open(video_path, "rb") as f:
+            while chunk := f.read(8192):
+                yield chunk
+    
+    headers = {
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(file_size),
+        "Content-Type": content_type,
+    }
+    return StreamingResponse(iter_full(), headers=headers)
+
+# Mount static files excluding video directory
+app.mount("/static", StaticFiles(directory="dashboard", html=True), name="static")
 
 GITHUB_CLIENT_ID     = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
