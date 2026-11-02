@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Guardian — Authenticating</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --bg: #0d0a08;
+    --bg-elev: #1a1410;
+    --bg-card: #15100d;
+    --steel: #2a2420;
+    --steel-light: #3a322c;
+    --gold: #d4a843;
+    --gold-dim: #b8923a;
+    --gold-pale: #e8d4a8;
+    --crimson: #c0392b;
+    --ink: #f5efe8;
+    --ink-muted: #9a8d7a;
+    --ink-dim: #6b5f4d;
+    --blade: #e8dcc8;
+    --shadow: rgba(0,0,0,0.6);
+    --shadow-gold: rgba(212,168,67,0.3);
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  .scroll-video {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .scroll-video video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .scroll-video::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: none;
+    pointer-events: none;
+  }
+  .scroll-video.fallback::after {
+    background: linear-gradient(180deg, #0d0a08 0%, #1a1410 50%, #0d0a08 100%);
+  }
+  
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    display: none;
+    pointer-events: none;
+  }
+  
+  .container {
+    max-width: 500px;
+    padding: 0 40px;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .logo {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+  .logo-mark {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    animation: markPulse 3s ease-in-out infinite;
+  }
+  @keyframes markPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(212,168,67,0.3); }
+    50% { box-shadow: 0 0 0 20px rgba(212,168,67,0); }
+  }
+  .logo-mark::before {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 2px;
+    background: var(--bg);
+    transform: rotate(45deg);
+  }
+  .logo-mark::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 22px;
+    background: var(--bg);
+    transform: rotate(45deg);
+  }
+  
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  
+  .desc {
+    font-size: 18px;
+    color: var(--ink-muted);
+    font-style: italic;
+    margin-bottom: 48px;
+    line-height: 1.7;
+  }
+  
+  .loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+  
+  .kanji-loader {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 80px;
+    color: rgba(212,168,67,0.15);
+    position: relative;
+    animation: kanjiDraw 2s ease-in-out infinite;
+  }
+  @keyframes kanjiDraw {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+  .kanji-loader::after {
+    content: '認証';
+    position: absolute;
+    top: 0; left: 0;
+    color: var(--gold);
+    clip-path: inset(0 0 100% 0);
+    animation: kanjiReveal 2s ease-in-out infinite;
+  }
+  @keyframes kanjiReveal {
+    0% { clip-path: inset(100% 0 0 0); }
+    50% { clip-path: inset(0 0 0 0); }
+    100% { clip-path: inset(0 0 100% 0); }
+  }
+  
+  .progress-ring {
+    width: 80px;
+    height: 80px;
+    transform: rotate(-90deg);
+  }
+  .progress-ring-bg {
+    fill: none;
+    stroke: var(--steel);
+    stroke-width: 4;
+  }
+  .progress-ring-fill {
+    fill: none;
+    stroke: url(#goldGradient);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 226;
+    stroke-dashoffset: 226;
+    animation: progressRing 2s ease-in-out infinite;
+  }
+  @keyframes progressRing {
+    0% { stroke-dashoffset: 226; }
+    50% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: 226; }
+  }
+  
+  .status-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    animation: statusPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes statusPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  
+  .kanji-bg {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(120px, 30vw, 200px);
+    line-height: 1;
+    color: rgba(212,168,67,0.03);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-10deg);
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+    z-index: -1;
+  }
+</style>
+</head>
+<body>
+<div class="scroll-video" id="scrollVideo">
+  <video id="bgVideo" playsinline muted loop preload="metadata" poster="/static/video/poster.jpg">
+    <source src="/static/video/samurai-1080.mp4" type="video/mp4">
+  </video>
+</div>
+<div class="vignette"></div>
+
+<div class="kanji-bg">守護</div>
+
+<div class="container">
+  <div class="logo">
+    <div class="logo-mark"></div>
+    GUARDIAN
+  </div>
+  
+  <h1>Forging Your<br/><span style="color: var(--gold);">Secure Session</span></h1>
+  <p class="desc">Establishing encrypted connection with GitHub. Preparing the guardian swarm.</p>
+  
+  <div class="loader">
+    <div class="kanji-loader">認</div>
+    
+    <svg class="progress-ring" viewBox="0 0 80 80">
+      <defs>
+        <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#d4a843"/>
+          <stop offset="100%" stop-color="#b8923a"/>
+        </linearGradient>
+      </defs>
+      <circle class="progress-ring-bg" cx="40" cy="40" r="36"/>
+      <circle class="progress-ring-fill" cx="40" cy="40" r="36"/>
+    </svg>
+    
+    <div class="status-text" id="statusText">Authenticating…</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="/static/js/scroll-video.js"></script>
+<script>
+const video = document.getElementById('bgVideo');
+if (video) {
+  video.muted = true;
+  video.playsInline = true;
+  video.play().catch(() => {
+    document.getElementById('scrollVideo').classList.add('fallback');
+  });
+}
+
+const statusTexts = [
+  'Authenticating…',
+  'Verifying credentials…',
+  'Establishing secure channel…',
+  'Awakening the guardians…',
+  'Ready to protect…'
+];
+let statusIndex = 0;
+const statusEl = document.getElementById('statusText');
+setInterval(() => {
+  statusIndex = (statusIndex + 1) % statusTexts.length;
+  statusEl.style.opacity = '0';
+  setTimeout(() => {
+    statusEl.textContent = statusTexts[statusIndex];
+    statusEl.style.opacity = '1';
+  }, 200);
+}, 2000);
+</script>
+</body>
+</html>

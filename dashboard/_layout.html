@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{{title}} — Guardian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  
+  :root {
+    --bg: #0d0a08;
+    --bg-elev: #1a1410;
+    --bg-card: #15100d;
+    --steel: #2a2420;
+    --steel-light: #3a322c;
+    --gold: #d4a843;
+    --gold-dim: #b8923a;
+    --gold-pale: #e8d4a8;
+    --crimson: #c0392b;
+    --crimson-dim: #962d22;
+    --ink: #f5efe8;
+    --ink-muted: #9a8d7a;
+    --ink-dim: #6b5f4d;
+    --blade: #e8dcc8;
+    --shadow: rgba(0,0,0,0.6);
+    --shadow-gold: rgba(212,168,67,0.3);
+    --shadow-crimson: rgba(192,57,43,0.3);
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Video Background Layer */
+  .scroll-video {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .scroll-video video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .scroll-video::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 30% 20%, rgba(212,168,67,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 80%, rgba(192,57,43,0.06) 0%, transparent 50%),
+      linear-gradient(180deg, rgba(13,10,8,0.4) 0%, rgba(13,10,8,0.8) 100%);
+    pointer-events: none;
+  }
+  .scroll-video.fallback::after {
+    background: linear-gradient(180deg, #0d0a08 0%, #1a1410 50%, #0d0a08 100%);
+  }
+  
+  /* Vignette overlay */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(ellipse at center, transparent 40%, var(--bg) 100%);
+    pointer-events: none;
+  }
+  
+  /* Layout */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+    position: relative;
+    z-index: 10;
+  }
+  
+  @media (max-width: 768px) {
+    .container { padding: 0 24px; }
+  }
+  
+  /* Navigation */
+  nav {
+    padding: 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--steel);
+    position: relative;
+  }
+  nav::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  
+  .logo {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: color 0.3s;
+  }
+  .logo:hover { color: var(--gold); }
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .logo-mark::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 2px;
+    background: var(--bg);
+    transform: rotate(45deg);
+  }
+  .logo-mark::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 18px;
+    background: var(--bg);
+    transform: rotate(45deg);
+  }
+  
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  
+  .nav-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    background: rgba(212,168,67,0.1);
+    border: 1px solid rgba(212,168,67,0.3);
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  
+  .user-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-elev);
+    border: 1px solid var(--steel);
+    border-radius: 24px;
+    padding: 6px 16px 6px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-muted);
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .user-pill:hover { border-color: var(--gold); background: var(--bg-card); }
+  .user-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--crimson));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-weight: 700; font-size: 11px;
+    color: var(--bg);
+  }
+  
+  .btn {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    padding: 12px 28px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    color: var(--bg);
+    border-color: var(--gold);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--gold-pale), var(--gold));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px var(--shadow-gold);
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink-muted);
+    border-color: var(--steel);
+  }
+  .btn-secondary:hover {
+    color: var(--ink);
+    border-color: var(--gold);
+    background: rgba(212,168,67,0.08);
+  }
+  .btn-danger {
+    background: transparent;
+    color: var(--crimson);
+    border-color: var(--crimson);
+  }
+  .btn-danger:hover {
+    background: rgba(192,57,43,0.1);
+    color: #e85d4f;
+    box-shadow: 0 8px 32px var(--shadow-crimson);
+  }
+  .btn:disabled, .btn.loading {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  .btn-sm { padding: 8px 18px; font-size: 11px; }
+  
+  /* Section base */
+  .section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .section-content {
+    width: 100%;
+    max-width: 900px;
+    padding: 80px 0;
+  }
+  
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    margin-bottom: 20px;
+    display: block;
+    position: relative;
+    padding-left: 60px;
+  }
+  .section-label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+  
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(36px, 6vw, 64px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    color: var(--ink);
+  }
+  .section-title .accent {
+    color: var(--gold);
+    font-weight: 900;
+  }
+  .section-title .accent-crimson {
+    color: var(--crimson);
+    font-weight: 900;
+  }
+  
+  .section-desc {
+    font-size: clamp(16px, 2.5vw, 20px);
+    color: var(--ink-muted);
+    font-style: italic;
+    line-height: 1.8;
+    max-width: 600px;
+  }
+  
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--steel), transparent);
+    margin: 40px 0;
+    position: relative;
+  }
+  .divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 1px;
+    background: var(--gold);
+  }
+  
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--steel);
+    border-radius: 8px;
+    padding: 32px;
+    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  }
+  .card:hover {
+    border-color: var(--steel-light);
+    transform: translateY(-4px);
+    box-shadow: 0 24px 48px var(--shadow);
+  }
+  .card.gold-border:hover { border-color: var(--gold); box-shadow: 0 24px 48px var(--shadow-gold); }
+  .card.crimson-border:hover { border-color: var(--crimson); box-shadow: 0 24px 48px var(--shadow-crimson); }
+  
+  /* Grid */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  @media (max-width: 900px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+  
+  /* Typography utilities */
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .font-display { font-family: 'Cinzel', serif; }
+  .text-gold { color: var(--gold); }
+  .text-crimson { color: var(--crimson); }
+  .text-muted { color: var(--ink-muted); }
+  .text-dim { color: var(--ink-dim); }
+  
+  /* Kanji/Kana decorative */
+  .kanji {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(80px, 15vw, 160px);
+    line-height: 1;
+    color: rgba(212,168,67,0.06);
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+  }
+  
+  /* Badge */
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 10px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .badge-gold { background: rgba(212,168,67,0.1); border: 1px solid rgba(212,168,67,0.3); color: var(--gold); }
+  .badge-crimson { background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.3); color: var(--crimson); }
+  .badge-steel { background: rgba(58,50,44,0.5); border: 1px solid var(--steel); color: var(--ink-muted); }
+  
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg-elev);
+    border: 1px solid var(--steel);
+    border-radius: 6px;
+    padding: 14px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    z-index: 1000;
+    max-width: 90vw;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--gold); }
+  .toast.error { border-color: var(--crimson); }
+  .toast-icon { flex-shrink: 0; width: 18px; height: 18px; }
+  
+  /* Loading spinner */
+  .spinner {
+    width: 40px; height: 40px;
+    border: 2px solid var(--steel);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  
+  /* Scroll indicator */
+  .scroll-indicator {
+    position: fixed;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .scroll-indicator.visible { opacity: 1; }
+  .scroll-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--steel);
+    border: 2px solid transparent;
+    transition: all 0.3s;
+  }
+  .scroll-dot.active { background: var(--gold); border-color: var(--gold); transform: scale(1.3); }
+  .scroll-line {
+    width: 1px; height: 60px;
+    background: linear-gradient(180deg, var(--gold), transparent);
+  }
+  @media (max-width: 1024px) { .scroll-indicator { display: none; } }
+  
+  /* Footer */
+  footer {
+    padding: 40px 0;
+    border-top: 1px solid var(--steel);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a {
+    color: var(--ink-muted);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--gold); }
+  
+  /* Reveal animations */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+  .reveal-delay-5 { transition-delay: 0.5s; }
+</style>
+</head>
+<body>
+<!-- Video Background -->
+<div class="scroll-video" id="scrollVideo">
+  <video id="bgVideo" playsinline muted loop preload="metadata" poster="/static/video/poster.jpg">
+    <source src="/static/video/samurai-1080.mp4" type="video/mp4">
+  </video>
+</div>
+<div class="vignette"></div>
+
+<!-- Scroll Progress Indicator -->
+<nav class="scroll-indicator" id="scrollIndicator" aria-hidden="true">
+  <div class="scroll-dot" data-section="0"></div>
+  <div class="scroll-dot" data-section="1"></div>
+  <div class="scroll-dot" data-section="2"></div>
+  <div class="scroll-dot" data-section="3"></div>
+  <div class="scroll-line"></div>
+</nav>
+
+<div class="container">
+  {{nav}}
+  <main>{{content}}</main>
+  {{footer}}
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+<!-- GSAP + ScrollTrigger -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="/static/js/scroll-video.js"></script>
+<script>
+  gsap.registerPlugin(ScrollTrigger);
+  
+  // Scroll indicator dots
+  const sections = document.querySelectorAll('.section');
+  const dots = document.querySelectorAll('.scroll-dot');
+  const indicator = document.getElementById('scrollIndicator');
+  
+  if (sections.length && dots.length) {
+    ScrollTrigger.create({
+      trigger: 'main',
+      start: 'top top',
+      end: 'bottom bottom',
+      onUpdate: self => {
+        indicator.classList.toggle('visible', self.progress > 0.05 && self.progress < 0.95);
+        const idx = Math.min(Math.floor(self.progress * sections.length), sections.length - 1);
+        dots.forEach((dot, i) => dot.classList.toggle('active', i === idx));
+      }
+    });
+  }
+  
+  // IntersectionObserver for reveal
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        revealObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+  
+  // Toast function
+  window.showToast = function(message, type = 'success') {
+    const t = document.getElementById('toast');
+    const icon = type === 'success' 
+      ? '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#d4a843" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    t.innerHTML = icon + message;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 4000);
+  };
+</script>
+{{extraScripts}}
+</body>
+</html>

@@ -29,18 +29,32 @@ async def landing():
     with open("dashboard/index.html") as f:
         return f.read()
 
+@app.get("/callback", response_class=HTMLResponse)
+async def oauth_callback():
+    with open("dashboard/callback.html") as f:
+        return f.read()
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(session: str = "", repo: str = ""):
+    if session not in sessions:
+        return RedirectResponse("/")
+    with open("dashboard/dashboard.html") as f:
+        return f.read()
+
 # ─── GitHub OAuth ─────────────────────────────────────────────────────────────
 
 @app.get("/auth/login")
-async def github_login():
+async def github_login(request: Request):
     """Redirect user to GitHub OAuth"""
-    scope = "repo,admin:repo_hook"   # repo access + webhook management
+    scope = "repo,admin:repo_hook"
+    # Use localhost for dev, production URL for prod
+    base_url = str(request.base_url).rstrip('/')
+    redirect_uri = f"{base_url}/auth/callback"
     url = (
         f"https://github.com/login/oauth/authorize"
         f"?client_id={GITHUB_CLIENT_ID}"
         f"&scope={scope}"
-        f"&redirect_uri=https://guardian-00ng.onrender.com/auth/callback"
-
+        f"&redirect_uri={redirect_uri}"
     )
     return RedirectResponse(url)
 
@@ -280,3 +294,15 @@ async def unprotect_repo(request: Request):
         pass
 
     return JSONResponse({"status": "unprotected", "repo": repo_name})
+
+# ─── Error Pages ──────────────────────────────────────────────────────────────
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    with open("dashboard/404.html") as f:
+        return HTMLResponse(f.read(), status_code=404)
+
+@app.exception_handler(500)
+async def server_error_handler(request: Request, exc: HTTPException):
+    with open("dashboard/500.html") as f:
+        return HTMLResponse(f.read(), status_code=500)

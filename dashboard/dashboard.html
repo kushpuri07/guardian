@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Guardian — Live Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --bg: #0d0a08;
+    --bg-elev: #1a1410;
+    --bg-card: #15100d;
+    --steel: #2a2420;
+    --steel-light: #3a322c;
+    --gold: #d4a843;
+    --gold-dim: #b8923a;
+    --gold-pale: #e8d4a8;
+    --crimson: #c0392b;
+    --crimson-dim: #962d22;
+    --ink: #f5efe8;
+    --ink-muted: #9a8d7a;
+    --ink-dim: #6b5f4d;
+    --blade: #e8dcc8;
+    --shadow: rgba(0,0,0,0.6);
+    --shadow-gold: rgba(212,168,67,0.3);
+    --shadow-crimson: rgba(192,57,43,0.3);
+    --green: #22c55e;
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  .scroll-video {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .scroll-video video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .scroll-video::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: none;
+    pointer-events: none;
+  }
+  .scroll-video.fallback::after {
+    background: linear-gradient(180deg, #0d0a08 0%, #1a1410 50%, #0d0a08 100%);
+  }
+  
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    display: none;
+    pointer-events: none;
+  }
+  
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+    position: relative;
+    z-index: 10;
+  }
+  
+  @media (max-width: 768px) {
+    .container { padding: 0 24px; }
+  }
+  
+  nav {
+    padding: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--steel);
+    position: relative;
+  }
+  nav::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  
+  .logo {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .logo-mark::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 2px;
+    background: var(--bg);
+    transform: rotate(45deg);
+  }
+  .logo-mark::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 18px;
+    background: var(--bg);
+    transform: rotate(45deg);
+  }
+  
+  .nav-center { display: flex; align-items: center; gap: 24px; }
+  .nav-repo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-muted);
+    background: var(--bg-elev);
+    border: 1px solid var(--steel);
+    border-radius: 6px;
+    padding: 8px 16px;
+  }
+  .nav-repo .repo-name { color: var(--gold); }
+  
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--ink-dim);
+    transition: background 0.3s;
+  }
+  .status-dot.live { background: var(--green); box-shadow: 0 0 12px var(--green); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  
+  .btn {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    color: var(--bg);
+    border-color: var(--gold);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--gold-pale), var(--gold));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px var(--shadow-gold);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-muted);
+    border-color: var(--steel);
+  }
+  .btn-ghost:hover {
+    color: var(--ink);
+    border-color: var(--gold);
+    background: rgba(212,168,67,0.08);
+  }
+  
+  .page-header {
+    padding: 40px 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .page-header h1 {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.2;
+  }
+  .page-header h1 .accent { color: var(--gold); }
+  
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 900px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .stats-bar { grid-template-columns: 1fr; } }
+  
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--steel);
+    border-radius: 8px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: border-color 0.3s;
+  }
+  .stat-card:hover { border-color: var(--steel-light); }
+  .stat-icon {
+    width: 48px; height: 48px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .stat-icon.crimson { background: rgba(192,57,43,0.15); color: var(--crimson); }
+  .stat-icon.gold { background: rgba(212,168,67,0.15); color: var(--gold); }
+  .stat-icon.green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .stat-icon.steel { background: rgba(58,50,44,0.5); color: var(--ink-muted); }
+  .stat-info { flex: 1; }
+  .stat-value {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+  }
+  
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    min-height: 500px;
+  }
+  @media (max-width: 1100px) { .kanban { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 768px) { .kanban { grid-template-columns: 1fr; } }
+  
+  .kanban-column {
+    background: var(--bg-card);
+    border: 1px solid var(--steel);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+  }
+  .kanban-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--steel);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .kanban-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .kanban-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: var(--bg-elev);
+    border: 1px solid var(--steel);
+    border-radius: 12px;
+    padding: 2px 10px;
+    color: var(--ink-muted);
+  }
+  .kanban-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 200px;
+  }
+  .kanban-list.empty::after {
+    content: 'No PRs';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--ink-dim);
+    font-style: italic;
+    font-size: 14px;
+  }
+  
+  .pr-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--steel);
+    border-radius: 6px;
+    padding: 16px;
+    transition: border-color 0.2s, transform 0.2s;
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .pr-card:hover { border-color: var(--steel-light); transform: translateX(4px); }
+  .pr-card.critical { border-color: var(--crimson); }
+  .pr-card.warning { border-color: var(--gold); }
+  .pr-card.clean { border-color: var(--green); }
+  
+  .pr-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .pr-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+  }
+  .pr-number span { color: var(--gold); }
+  .pr-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+  .badge.critical { background: rgba(192,57,43,0.15); border: 1px solid rgba(192,57,43,0.3); color: var(--crimson); }
+  .badge.warning { background: rgba(212,168,67,0.15); border: 1px solid rgba(212,168,67,0.3); color: var(--gold); }
+  .badge.clean { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: var(--green); }
+  .badge.pending { background: rgba(58,50,44,0.5); border: 1px solid var(--steel); color: var(--ink-muted); }
+  
+  .pr-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  
+  .pr-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-dim);
+  }
+  .pr-author { display: flex; align-items: center; gap: 6px; }
+  .pr-author img { width: 20px; height: 20px; border-radius: 50%; }
+  
+  .pr-findings {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--steel);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .finding {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .finding.critical { background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.2); color: var(--crimson); }
+  .finding.warning { background: rgba(212,168,67,0.08); border: 1px solid rgba(212,168,67,0.2); color: var(--gold); }
+  .finding.fixed { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); color: var(--green); }
+  .finding-icon { flex-shrink: 0; width: 14px; height: 14px; }
+  
+  .kanji {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(80px, 15vw, 160px);
+    line-height: 1;
+    color: rgba(212,168,67,0.04);
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--ink-muted);
+  }
+  .empty-state .icon { font-size: 64px; margin-bottom: 20px; opacity: 0.3; }
+  .empty-state h3 { font-family: 'Cinzel', serif; font-size: 24px; margin-bottom: 8px; color: var(--ink); }
+  .empty-state p { font-style: italic; }
+</style>
+</head>
+<body>
+<div class="scroll-video" id="scrollVideo">
+  <video id="bgVideo" playsinline muted loop preload="metadata" poster="/static/video/poster.jpg">
+    <source src="/static/video/samurai-1080.mp4" type="video/mp4">
+  </video>
+</div>
+<div class="vignette"></div>
+
+<div class="container">
+  <nav>
+    <a href="/" class="logo">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="36" height="36">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      GUARDIAN
+    </a>
+    <div class="nav-center">
+      <div class="nav-repo" id="currentRepo">Select a repository to monitor</div>
+    </div>
+    <div class="nav-right">
+      <div class="status-indicator">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Connecting…</span>
+      </div>
+      <a href="/repos" class="btn btn-ghost btn-sm">Switch Repo</a>
+      <a href="/auth/logout" class="btn btn-ghost btn-sm">Logout</a>
+    </div>
+  </nav>
+  
+  <header class="page-header">
+    <h1>Live <span class="accent">Watch</span></h1>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <button id="refreshBtn" class="btn btn-primary btn-sm">Refresh</button>
+      <span class="font-mono text-dim" style="font-size:11px;" id="lastUpdated">—</span>
+    </div>
+  </header>
+  
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-icon crimson">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value" id="statCritical">0</div>
+        <div class="stat-label">Critical</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon gold">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value" id="statWarning">0</div>
+        <div class="stat-label">Warnings</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value" id="statFixed">0</div>
+        <div class="stat-label">Auto-Fixed</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon steel">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value" id="statPending">0</div>
+        <div class="stat-label">Pending</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="kanban" id="kanbanBoard">
+    <div class="kanban-column">
+      <div class="kanban-header">
+        <div class="kanban-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Critical
+          <span class="kanban-count" id="countCritical">0</span>
+        </div>
+      </div>
+      <div class="kanban-list empty" id="listCritical"></div>
+    </div>
+    <div class="kanban-column">
+      <div class="kanban-header">
+        <div class="kanban-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4a843" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Warnings
+          <span class="kanban-count" id="countWarning">0</span>
+        </div>
+      </div>
+      <div class="kanban-list empty" id="listWarning"></div>
+    </div>
+    <div class="kanban-column">
+      <div class="kanban-header">
+        <div class="kanban-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Auto-Fixed
+          <span class="kanban-count" id="countFixed">0</span>
+        </div>
+      </div>
+      <div class="kanban-list empty" id="listFixed"></div>
+    </div>
+    <div class="kanban-column">
+      <div class="kanban-header">
+        <div class="kanban-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a8d7a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Pending Review
+          <span class="kanban-count" id="countPending">0</span>
+        </div>
+      </div>
+      <div class="kanban-list empty" id="listPending"></div>
+    </div>
+  </div>
+</div>
+
+<div class="kanji" style="top: 15%; right: -60px; transform: rotate(-15deg);">監視</div>
+<div class="kanji" style="bottom: 15%; left: -80px; transform: rotate(10deg);">守護</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="/static/js/scroll-video.js"></script>
+<script>
+const video = document.getElementById('bgVideo');
+if (video) {
+  video.muted = true;
+  video.playsInline = true;
+  video.play().catch(() => {
+    document.getElementById('scrollVideo').classList.add('fallback');
+  });
+}
+
+const SESSION = new URLSearchParams(window.location.search).get('session') || '';
+const REPO = new URLSearchParams(window.location.search).get('repo') || '';
+
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const currentRepo = document.getElementById('currentRepo');
+const lastUpdated = document.getElementById('lastUpdated');
+const refreshBtn = document.getElementById('refreshBtn');
+
+const lists = {
+  critical: document.getElementById('listCritical'),
+  warning: document.getElementById('listWarning'),
+  fixed: document.getElementById('listFixed'),
+  pending: document.getElementById('listPending')
+};
+const counts = {
+  critical: document.getElementById('countCritical'),
+  warning: document.getElementById('countWarning'),
+  fixed: document.getElementById('countFixed'),
+  pending: document.getElementById('countPending')
+};
+const statEls = {
+  critical: document.getElementById('statCritical'),
+  warning: document.getElementById('statWarning'),
+  fixed: document.getElementById('statFixed'),
+  pending: document.getElementById('statPending')
+};
+
+if (REPO) {
+  currentRepo.innerHTML = 'Monitoring: <span class="repo-name">' + REPO + '</span>';
+}
+
+async function fetchStatus() {
+  try {
+    const res = await fetch('/status');
+    const data = await res.json();
+    renderDashboard(data);
+    statusDot.classList.add('live');
+    statusText.textContent = 'Live';
+    lastUpdated.textContent = 'Updated ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    statusDot.classList.remove('live');
+    statusText.textContent = 'Disconnected';
+  }
+}
+
+function renderDashboard(data) {
+  const findings = data.findings || [];
+  
+  const byType = {
+    critical: findings.filter(f => f.severity === 'critical' && !f.fixed),
+    warning: findings.filter(f => f.severity === 'warning' && !f.fixed),
+    fixed: findings.filter(f => f.fixed),
+    pending: findings.filter(f => f.severity === 'pending')
+  };
+  
+  Object.keys(byType).forEach(type => {
+    const items = byType[type];
+    counts[type].textContent = items.length;
+    statEls[type].textContent = items.length;
+    
+    if (items.length === 0) {
+      lists[type].innerHTML = '';
+      lists[type].classList.add('empty');
+    } else {
+      lists[type].classList.remove('empty');
+      lists[type].innerHTML = items.map(f => `
+        <div class="pr-card ${type}">
+          <div class="pr-header">
+            <div class="pr-number">PR <span>#${f.pr_number}</span></div>
+            <div class="pr-badges">
+              <span class="badge ${f.severity}">${f.severity}</span>
+              ${f.fixed ? '<span class="badge fixed">fixed</span>' : ''}
+            </div>
+          </div>
+          <div class="pr-title">${escapeHtml(f.title)}</div>
+          <div class="pr-meta">
+            <div class="pr-author">
+              ${f.author_avatar ? `<img src="${escapeHtml(f.author_avatar)}" alt="">` : ''}
+              <span>${escapeHtml(f.author)}</span>
+            </div>
+            <span>${timeAgo(f.updated_at)}</span>
+          </div>
+          ${f.findings && f.findings.length ? `
+            <div class="pr-findings">
+              ${f.findings.map(fi => `
+                <div class="finding ${fi.type}">
+                  <svg class="finding-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    ${fi.type === 'critical' ? '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>' : ''}
+                    ${fi.type === 'warning' ? '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>' : ''}
+                    ${fi.type === 'fixed' ? '<polyline points="20 6 9 17 4 12"/>' : ''}
+                  </svg>
+                  <span>${escapeHtml(fi.message)}</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+  });
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return 'unknown';
+  const diff = Date.now() - new Date(dateStr);
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return 'just now';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+
+refreshBtn.addEventListener('click', fetchStatus);
+setInterval(fetchStatus, 10000);
+fetchStatus();
+</script>
+</body>
+</html>
